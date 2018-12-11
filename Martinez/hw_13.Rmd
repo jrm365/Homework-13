@@ -1,0 +1,182 @@
+---
+title: "HW_13"
+author: "Jaquelin Martinez"
+date: "December 10, 2018"
+output: word_document
+---
+
+```{r, cache=TRUE}
+library(dplyr, quietly = T)
+library(caret, quietly = T)
+library(nnet, quietly = T)
+
+show_number <- function(m, i, oriented=T)
+{
+  im <- matrix(mtrain[i,], byrow=T, nrow=28)
+  
+  if (oriented) {
+    im_orient <- matrix(0, nrow=28, ncol=28)
+    for (i in 1:28)
+      im_orient[i,] <- rev(im[,i])
+    
+    im <- im_orient
+  }
+  image(im)
+}
+
+
+# get the training datasets
+if (!exists("mtrain")) {
+  mtrain <- read.csv("mnist_train.csv", header=F) %>% as.matrix
+  train_classification <- mtrain[,1] #y values
+  output_vector <- rep(NA, length(train_classification))
+  
+  for (i in 1:length(train_classification)) {
+    c_number <- train_classification[i]
+    if (c_number==3) {
+       output_vector[i] <- 1
+    } else {
+      output_vector[i] <- 0 
+    }
+  }
+  
+  y <- factor(output_vector, levels=c(0,1))
+  y <- y[1:1000]
+  # for caret, y variable should be a factor
+  # see line 54 in caret_intro_2d.R
+  mtrain <- mtrain[,-1]/256 # x matrix
+  
+  colnames(mtrain) <- 1:(28^2)
+  x <- mtrain[1:1000,]
+  
+  #colnames(mtrain) <- NULL
+  #rownames(mtrain) <- NULL
+}
+
+# look at a sample
+#show_number(mtrain, 1)
+```
+
+```{r, cache=TRUE}
+tuning_df <- data.frame(size=7:12, decay=0)
+
+fitControl <- trainControl(method="none")
+
+fitControl <- trainControl(##10-fold CV
+  method = "repeatedcv",
+  number = 2,
+  ## repeated ten times
+  repeats = 2)
+
+t_out <- caret::train(x=x, y=y, method="nnet",
+                      trControl = fitControl,
+                      tuneGrid=tuning_df, maxit=100000, MaxNWts=100000)
+
+prediction_errors <- function(x, y)
+{
+  true_y <- y
+  pred_y <- predict(t_out, x)
+  
+  n_samples <- nrow(x)
+  error <- sum(true_y != pred_y)/n_samples
+  return (error)
+}
+
+prediction_errors(x,y)
+
+```
+
+
+```{r, cache=T}
+print(t_out)
+``` 
+
+
+```{r, cache=T}
+tuning_df <- data.frame(size=8:12, decay=c(0, 0.1, 0.5, 1, 2))
+
+fitControl <- trainControl(method="none")
+
+fitControl <- trainControl(##10-fold CV
+  method = "repeatedcv",
+  number = 2,
+  ## repeated ten times
+  repeats = 2)
+
+t_out <- caret::train(x=x, y=y, method="nnet",
+                      trControl = fitControl,
+                      tuneGrid=tuning_df, maxit=100000, MaxNWts=100000)
+
+prediction_errors <- function(x, y)
+{
+  true_y <- y
+  pred_y <- predict(t_out, x)
+  
+  n_samples <- nrow(x)
+  error <- sum(true_y != pred_y)/n_samples
+  return (error)
+}
+
+prediction_errors(x,y)
+
+print(t_out)
+```
+
+
+```{r, cache=T}
+tuning_df <- data.frame(size=11, decay=1)
+
+fitControl <- trainControl(method="none")
+
+fitControl <- trainControl(##10-fold CV
+  method = "repeatedcv",
+  number = 2,
+  ## repeated ten times
+  repeats = 2)
+
+t_out <- caret::train(x=x, y=y, method="nnet",
+                      trControl = fitControl,
+                      tuneGrid=tuning_df, maxit=100000, MaxNWts=100000)
+
+prediction_errors <- function(x, y)
+{
+  true_y <- y
+  pred_y <- predict(t_out, x)
+  
+  n_samples <- nrow(x)
+  error <- sum(true_y != pred_y)/n_samples
+  return (error)
+}
+
+prediction_errors(x,y)
+```
+
+running the mnist_test data 
+```{r, cache=T} 
+if (!exists("mtrain2")) {
+  mtrain2 <- read.csv("mnist_test.csv", header=F) %>% as.matrix
+  train_classification2 <- mtrain2[,1] #y values
+  output_vector2 <- rep(NA, length(train_classification2))
+  
+  for (i in 1:length(train_classification2)) {
+    c_number <- train_classification2[i]
+    if (c_number==3) {
+       output_vector2[i] <- 1
+    } else {
+      output_vector2[i] <- 0 
+    }
+  }
+  
+  y2 <- factor(output_vector2, levels=c(0,1))
+  y2 <- y2[1:1000]
+  # for caret, y variable should be a factor
+  # see line 54 in caret_intro_2d.R
+  mtrain2 <- mtrain2[,-1]/256 # x matrix
+  
+  colnames(mtrain2) <- 1:(28^2)
+  x2 <- mtrain2[1:1000,]
+  
+}
+
+prediction_errors(x2,y2)
+```
